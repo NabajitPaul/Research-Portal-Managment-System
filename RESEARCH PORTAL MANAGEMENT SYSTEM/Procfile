@@ -1,1 +1,1 @@
-web: gunicorn app:app
+web: gunicorn "RESEARCH PORTAL MANAGEMENT SYSTEM.app:app"
