@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Main navigation bar color (from style.css for reference) */
+    /* nav { background-color: #196ebd; } */
+
+    .user-selection-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+    }
+    .user-box {
+        background-color: #e0f2f7; /* Lighter, slightly desaturated blue - complementary to nav */
+        border: 1px solid #b0cddb;   /* Border color to match */
+        color: #1a5276;           /* Darker blue text for good contrast */
+        padding: 12px 18px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        text-align: center;
+        min-width: 120px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        align-items: center; 
+        justify-content: center; 
+    }
+    .user-box:hover {
+        background-color: #cce7f0; /* Slightly darker on hover */
+        border-color: #a0bac9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .user-box.selected {
+        background-color: #196ebd; /* Using the main nav bar color for selected */
+        color: white;              /* White text for selected state */
+        border-color: #124f8c;     /* Slightly darker border for selected */
+        font-weight: bold;
+        box-shadow: 0 2px 5px rgba(25, 107, 189, 0.5);
+    }
+
+    /* --- Rest of the styles remain the same --- */
+    .user-details-section {
+        margin-top: 25px;
+        padding: 20px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .user-details-section h3, .user-details-section h4 {
+        color: #0056b3;
+    }
+    .user-details-section h4 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+    }
+    .no-data-message {
+        color: #555;
+        font-style: italic;
+    }
+    .search-bar-container {
+        margin-bottom: 20px;
+    }
+    .search-bar-container input[type="search"] {
+        width: 300px; 
+        padding: 10px 15px; 
+        border: 1px solid #ddd;
+        border-radius: 20px; 
+        box-sizing: border-box;
+        font-size: 0.95em; 
+        outline: none; 
+        transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .search-bar-container input[type="search"]:focus {
+        border-color: #007bff; 
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); 
+    }
+    .search-bar-container input[type="search"]::placeholder { 
+        color: #aaa; 
+        opacity: 1; 
+    }
+    .search-bar-container input[type="search"]::-webkit-input-placeholder { 
+        color: #aaa; 
+    }
+    .search-bar-container input[type="search"]::-moz-placeholder { 
+        color: #aaa; 
+        opacity: 1;
+    }
+    .search-bar-container input[type="search"]:-ms-input-placeholder { 
+        color: #aaa; 
+    }
+    .search-bar-container input[type="search"]::-ms-input-placeholder { 
+        color: #aaa; 
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <h2>Admin Dashboard</h2>
+
+    <section>
+        <h3>Platform Stats</h3>
+        <p>Total Registered Users: {{ total_users }}</p>
+    </section>
+
+    <hr>
+
+    <section>
+        <h3>Select User to View Details</h3>
+
+        <div class="search-bar-container">
+            <input type="search" id="userSearchInput" placeholder="Search user...">
+        </div>
+
+        {% if all_selectable_users %}
+            <div class="user-selection-container" id="userSelectionContainer">
+                {% for user_item in all_selectable_users %}
+                    {% set link_url = '' %}
+                    {% if selected_user_details and selected_user_details.id == user_item.id %}
+                        {% set link_url = url_for('admin_dashboard') %}
+                    {% else %}
+                        {% set link_url = url_for('admin_dashboard', selected_user_id=user_item.id) %}
+                    {% endif %}
+                    <a href="{{ link_url }}"
+                       class="user-box {% if selected_user_details and selected_user_details.id == user_item.id %}selected{% endif %}"
+                       data-username="{{ user_item.username.lower() }}">
+                        {{ user_item.username }}
+                    </a>
+                {% endfor %}
+            </div>
+             <p id="noUserFoundMessage" style="display:none;" class="no-data-message">No users match your search.</p>
+        {% else %}
+            <p class="no-data-message">No non-admin users registered yet.</p>
+        {% endif %}
+    </section>
+
+    <hr>
+
+    {% if selected_user_details %}
+        <div class="user-details-section">
+            <h3>Details for User: {{ selected_user_details.username }}</h3>
+
+            <section>
+                <h4>Uploaded Papers by {{ selected_user_details.username }}</h4>
+                {% if user_papers %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Author(s)</th>
+                                <th>Category</th>
+                                <th>Publication Name</th>
+                                <th>Date</th>
+                                <th>File Path</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for paper_data in user_papers %}
+                            <tr>
+                                <td>{{ paper_data.title }}</td>
+                                <td>{{ paper_data.author_name }}</td>
+                                <td>{{ paper_data.category }}</td>
+                                <td>{{ paper_data.publication_name }}</td>
+                                <td>{{ paper_data.publication_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ paper_data.file_path }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="no-data-message">No papers have been uploaded by this user.</p>
+                {% endif %}
+            </section>
+
+            <hr style="margin: 25px 0;">
+
+            <section>
+                <h4>ORCID-Linked Data for {{ selected_user_details.username }} ({{ selected_user_details.orcid_id or 'No ORCID ID on file' }})</h4>
+                {% if user_orcid_works %}
+                    <ul>
+                    {% for work in user_orcid_works %}
+                        <li>
+                            <strong>{{ work.title or 'N/A' }}</strong> ({{ work.work_type or 'N/A' }})
+                            {% if work.publication_year %}- Year: {{ work.publication_year }}{% endif %}
+                            {% if work.journal_title and work.journal_title != 'N/A' %}<br><em>Journal: {{ work.journal_title }}</em>{% endif %}
+                            {% if work.doi %}<br><a href="https://doi.org/{{ work.doi }}" target="_blank">DOI: {{ work.doi }}</a>{% endif %}
+                        </li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="no-data-message">No ORCID works found for this user, or their ORCID ID is not on file/public.</p>
+                {% endif %}
+            </section>
+        </div>
+    {% else %}
+        {% if all_selectable_users %}
+        <p class="no-data-message">Please select a user from the list above (or search) to view their uploaded papers and ORCID data.</p>
+        {% endif %}
+    {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('userSearchInput');
+    const userSelectionContainer = document.getElementById('userSelectionContainer');
+    const noUserFoundMessage = document.getElementById('noUserFoundMessage');
+
+    if (searchInput && userSelectionContainer) {
+        const userBoxes = userSelectionContainer.getElementsByClassName('user-box');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            for (let i = 0; i < userBoxes.length; i++) {
+                const userBox = userBoxes[i];
+                const username = userBox.dataset.username; 
+
+                if (username.includes(searchTerm)) {
+                    userBox.style.display = ''; 
+                    visibleCount++;
+                } else {
+                    userBox.style.display = 'none';
+                }
+            }
+
+            if (noUserFoundMessage) {
+                if (visibleCount === 0 && searchTerm !== '') {
+                    noUserFoundMessage.style.display = 'block';
+                } else {
+                    noUserFoundMessage.style.display = 'none';
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

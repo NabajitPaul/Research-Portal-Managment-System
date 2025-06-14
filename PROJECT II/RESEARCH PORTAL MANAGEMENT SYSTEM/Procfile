@@ -1,0 +1,2 @@
+web: gunicorn "RESEARCH PORTAL MANAGEMENT SYSTEM.app:app"
+
